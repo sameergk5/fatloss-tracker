@@ -66,6 +66,9 @@ const Icons = {
   flame: "M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z",
   trophy: ["M6 9H4.5a2.5 2.5 0 0 1 0-5H6","M18 9h1.5a2.5 2.5 0 0 0 0-5H18","M4 22h16","M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22","M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22","M18 2H6v7a6 6 0 0 0 12 0V2Z"],
   clock: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z","M12 6v6l4 2"],
+  trend: ["M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"],
+  ruler: ["M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z","m14.5 12.5 2-2","m11.5 9.5 2-2","m8.5 6.5 2-2","m17.5 15.5 2-2"],
+  target: ["M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z","M12 6a6 6 0 1 0 0 12 6 6 0 0 0 0-12Z","M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4Z"],
 };
 
 // ─── HELPERS ────────────────────────────────────────
@@ -317,6 +320,40 @@ function saveWeight(dateStr, kg) {
   try { if(kg) localStorage.setItem(`weight:${dateStr}`, kg.toString()); else localStorage.removeItem(`weight:${dateStr}`); } catch(e) {}
 }
 
+// ─── BODY MEASUREMENTS STORAGE ──────────────────────
+function loadMeasurement(dateStr) {
+  try { const v = localStorage.getItem(`measure:${dateStr}`); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+function saveMeasurement(dateStr, data) {
+  try { if(data) localStorage.setItem(`measure:${dateStr}`, JSON.stringify(data)); else localStorage.removeItem(`measure:${dateStr}`); } catch(e) {}
+}
+function loadGoals() {
+  try { const v = localStorage.getItem('pref:goals'); return v ? JSON.parse(v) : null; } catch(e) { return null; }
+}
+function saveGoals(goals) {
+  try { localStorage.setItem('pref:goals', JSON.stringify(goals)); } catch(e) {}
+}
+function getAllWeights(days=90) {
+  const result = [];
+  const t = today();
+  for(let i=days-1; i>=0; i--) {
+    const d = addDays(t, -i);
+    const w = loadWeight(d);
+    if(w) result.push({date:d, value:w});
+  }
+  return result;
+}
+function getAllMeasurements(days=90) {
+  const result = [];
+  const t = today();
+  for(let i=days-1; i>=0; i--) {
+    const d = addDays(t, -i);
+    const m = loadMeasurement(d);
+    if(m) result.push({date:d, ...m});
+  }
+  return result;
+}
+
 function exportAll() {
   const data = {};
   for(let i=0; i<localStorage.length; i++) {
@@ -338,7 +375,7 @@ function importData(file) {
         const data = JSON.parse(e.target.result);
         let count = 0;
         for(const [k,v] of Object.entries(data)) {
-          if(k.startsWith('log:') || k.startsWith('weight:')) {
+          if(k.startsWith('log:') || k.startsWith('weight:') || k.startsWith('measure:') || k.startsWith('pref:')) {
             localStorage.setItem(k, v);
             count++;
           }
@@ -932,6 +969,10 @@ function App() {
               waterTotal={waterTotal} waterGoal={waterGoal} suppDone={suppDone} suppTotal={suppItems.length}
               history={history} onJump={d=>{setDateStr(d);setTab('today')}} drinksTotalP={drinksTotalP}/>
           )}
+
+          {tab === 'progress' && (
+            <ProgressView dateStr={dateStr}/>
+          )}
         </div>
 
         {/* Bottom Nav */}
@@ -943,6 +984,10 @@ function App() {
           <button onClick={()=>setTab('summary')} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'10px'}}>
             <Icon d={Icons.chart} size={20} color={tab==='summary'?C.primary:C.sub}/>
             <span style={{fontSize:11,fontWeight:600,color:tab==='summary'?C.primary:C.sub}}>Summary</span>
+          </button>
+          <button onClick={()=>setTab('progress')} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:2,padding:'10px'}}>
+            <Icon d={Icons.trend} size={20} color={tab==='progress'?C.primary:C.sub}/>
+            <span style={{fontSize:11,fontWeight:600,color:tab==='progress'?C.primary:C.sub}}>Progress</span>
           </button>
         </div>
 
@@ -1096,6 +1141,431 @@ function TimelineView({log, dateStr, update, setModal, onToggleTimeView}) {
           );
         })}
       </div>
+    </Fragment>
+  );
+}
+
+// ─── GOAL SETUP MODAL ───────────────────────────────
+function GoalSetupModal({onClose, onSave}) {
+  const existing = loadGoals() || {};
+  const [startWeight, setStartWeight] = useState(existing.startWeight || '');
+  const [goalWeight, setGoalWeight] = useState(existing.goalWeight || '');
+  const [height, setHeight] = useState(existing.height || '');
+  const [targetDate, setTargetDate] = useState(existing.targetDate || '');
+  const [startDate, setStartDate] = useState(existing.startDate || today());
+
+  const save = () => {
+    const goals = {
+      startWeight: parseFloat(startWeight) || 0,
+      goalWeight: parseFloat(goalWeight) || 0,
+      height: parseFloat(height) || 0,
+      targetDate: targetDate || '',
+      startDate: startDate || today()
+    };
+    saveGoals(goals);
+    onSave();
+    onClose();
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{padding:'24px 20px'}}>
+        <h3 style={{color:C.ink,fontWeight:700,fontSize:16,marginBottom:4}}>🎯 Set Goals</h3>
+        <p style={{color:C.sub,fontSize:12,marginBottom:16}}>Used to calculate your projection line</p>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <div>
+            <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>START DATE</label>
+            <input type="date" value={startDate} onChange={e=>setStartDate(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>START WEIGHT (kg)</label>
+              <input type="number" step="0.1" value={startWeight} onChange={e=>setStartWeight(e.target.value)} placeholder="e.g. 85" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>GOAL WEIGHT (kg)</label>
+              <input type="number" step="0.1" value={goalWeight} onChange={e=>setGoalWeight(e.target.value)} placeholder="e.g. 75" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>HEIGHT (cm)</label>
+              <input type="number" value={height} onChange={e=>setHeight(e.target.value)} placeholder="e.g. 175" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>TARGET DATE</label>
+              <input type="date" value={targetDate} onChange={e=>setTargetDate(e.target.value)} style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:16}}>
+          <button onClick={onClose} style={{flex:1,padding:'12px',borderRadius:12,background:C.surface,border:`1px solid ${C.border}`,fontWeight:600}}>Cancel</button>
+          <button onClick={save} style={{flex:1,padding:'12px',borderRadius:12,background:C.primary,color:'#fff',fontWeight:600}}>Save</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── MEASUREMENTS MODAL ─────────────────────────────
+function MeasurementsModal({dateStr, onClose, onSave}) {
+  const existing = loadMeasurement(dateStr) || {};
+  const [waist, setWaist] = useState(existing.waist || '');
+  const [chest, setChest] = useState(existing.chest || '');
+  const [arms, setArms] = useState(existing.arms || '');
+  const [bodyFat, setBodyFat] = useState(existing.bodyFat || '');
+
+  const save = () => {
+    const data = {};
+    if(waist) data.waist = parseFloat(waist);
+    if(chest) data.chest = parseFloat(chest);
+    if(arms) data.arms = parseFloat(arms);
+    if(bodyFat) data.bodyFat = parseFloat(bodyFat);
+    saveMeasurement(dateStr, Object.keys(data).length > 0 ? data : null);
+    onSave();
+    onClose();
+  };
+
+  return (
+    <Modal onClose={onClose}>
+      <div style={{padding:'24px 20px'}}>
+        <h3 style={{color:C.ink,fontWeight:700,fontSize:16,marginBottom:4}}>📏 Body Measurements</h3>
+        <p style={{color:C.sub,fontSize:12,marginBottom:16}}>{dayLabel(dateStr)} · Log weekly for best tracking</p>
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          <div style={{display:'flex',gap:8}}>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>WAIST (cm)</label>
+              <input type="number" step="0.5" value={waist} onChange={e=>setWaist(e.target.value)} placeholder="e.g. 90" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>CHEST (cm)</label>
+              <input type="number" step="0.5" value={chest} onChange={e=>setChest(e.target.value)} placeholder="e.g. 100" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+          </div>
+          <div style={{display:'flex',gap:8}}>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>ARMS (cm)</label>
+              <input type="number" step="0.5" value={arms} onChange={e=>setArms(e.target.value)} placeholder="e.g. 33" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+            <div style={{flex:1}}>
+              <label style={{fontSize:11,color:C.sub,fontWeight:600,display:'block',marginBottom:4}}>BODY FAT %</label>
+              <input type="number" step="0.5" value={bodyFat} onChange={e=>setBodyFat(e.target.value)} placeholder="e.g. 22" style={{width:'100%',padding:'10px 12px',borderRadius:10,border:`1px solid ${C.border}`,fontSize:14}}/>
+            </div>
+          </div>
+        </div>
+        <div style={{display:'flex',gap:8,marginTop:16}}>
+          <button onClick={onClose} style={{flex:1,padding:'12px',borderRadius:12,background:C.surface,border:`1px solid ${C.border}`,fontWeight:600}}>Cancel</button>
+          <button onClick={save} style={{flex:1,padding:'12px',borderRadius:12,background:C.primary,color:'#fff',fontWeight:600}}>Save</button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+// ─── SVG LINE CHART ─────────────────────────────────
+function LineChart({datasets, height=160, yLabel='', showLegend=true}) {
+  // datasets: [{label, data:[{date,value}], color, dashed?}]
+  if(!datasets || datasets.every(ds=>ds.data.length===0)) return null;
+
+  const allDates = [...new Set(datasets.flatMap(ds=>ds.data.map(d=>d.date)))].sort();
+  const allValues = datasets.flatMap(ds=>ds.data.map(d=>d.value)).filter(v=>v!=null);
+  if(allValues.length === 0) return null;
+
+  const minV = Math.min(...allValues);
+  const maxV = Math.max(...allValues);
+  const range = maxV - minV || 1;
+  const padding = range * 0.1;
+  const yMin = minV - padding;
+  const yMax = maxV + padding;
+
+  const W = 320, H = height, PL = 40, PR = 10, PT = 10, PB = 30;
+  const chartW = W - PL - PR;
+  const chartH = H - PT - PB;
+
+  const dateToX = (date) => {
+    if(allDates.length <= 1) return PL + chartW / 2;
+    const idx = allDates.indexOf(date);
+    return PL + (idx / (allDates.length - 1)) * chartW;
+  };
+  const valToY = (v) => PT + chartH - ((v - yMin) / (yMax - yMin)) * chartH;
+
+  // Y-axis labels
+  const yTicks = 4;
+  const yLabels = [];
+  for(let i = 0; i <= yTicks; i++) {
+    const v = yMin + (i / yTicks) * (yMax - yMin);
+    yLabels.push({value: Math.round(v * 10) / 10, y: valToY(v)});
+  }
+
+  // X-axis labels (show ~5)
+  const xStep = Math.max(1, Math.floor(allDates.length / 5));
+  const xLabels = allDates.filter((_, i) => i % xStep === 0 || i === allDates.length - 1);
+
+  return (
+    <div>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{width:'100%',height:'auto'}}>
+        {/* Grid lines */}
+        {yLabels.map((yl, i) => (
+          <Fragment key={i}>
+            <line x1={PL} y1={yl.y} x2={W-PR} y2={yl.y} stroke={C.border} strokeWidth="0.5"/>
+            <text x={PL-6} y={yl.y+4} textAnchor="end" fontSize="8" fill={C.sub}>{yl.value}</text>
+          </Fragment>
+        ))}
+
+        {/* Data lines */}
+        {datasets.map((ds, di) => {
+          if(ds.data.length < 2) {
+            // Single dot
+            return ds.data.length === 1 ? (
+              <circle key={di} cx={dateToX(ds.data[0].date)} cy={valToY(ds.data[0].value)} r={4} fill={ds.color}/>
+            ) : null;
+          }
+          const points = ds.data.map(d => `${dateToX(d.date)},${valToY(d.value)}`).join(' ');
+          return (
+            <Fragment key={di}>
+              <polyline points={points} fill="none" stroke={ds.color} strokeWidth="2" strokeDasharray={ds.dashed ? '6,3' : 'none'} strokeLinecap="round" strokeLinejoin="round"/>
+              {ds.data.map((d, i) => (
+                <circle key={i} cx={dateToX(d.date)} cy={valToY(d.value)} r={3} fill={ds.color}/>
+              ))}
+            </Fragment>
+          );
+        })}
+
+        {/* X labels */}
+        {xLabels.map((d, i) => (
+          <text key={i} x={dateToX(d)} y={H-4} textAnchor="middle" fontSize="8" fill={C.sub}>
+            {new Date(d+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})}
+          </text>
+        ))}
+      </svg>
+      {showLegend && datasets.length > 1 && (
+        <div style={{display:'flex',gap:12,justifyContent:'center',marginTop:6}}>
+          {datasets.map((ds, i) => (
+            <span key={i} style={{display:'flex',alignItems:'center',gap:4,fontSize:11,color:C.sub}}>
+              <span style={{width:12,height:3,background:ds.color,borderRadius:2,display:'inline-block',borderTop:ds.dashed?'1px dashed '+ds.color:'none'}}/>
+              {ds.label}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── PROGRESS VIEW ──────────────────────────────────
+function ProgressView({dateStr}) {
+  const [goals, setGoals] = useState(loadGoals);
+  const [showGoals, setShowGoals] = useState(false);
+  const [showMeasure, setShowMeasure] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const refresh = () => { setGoals(loadGoals()); setRefreshKey(k=>k+1); };
+
+  const weights = useMemo(() => getAllWeights(90), [refreshKey]);
+  const measurements = useMemo(() => getAllMeasurements(90), [refreshKey]);
+
+  // Projection calculation
+  const projection = useMemo(() => {
+    if(!goals || !goals.startWeight || !goals.goalWeight || !goals.targetDate || !goals.startDate) return [];
+    const start = new Date(goals.startDate+'T00:00:00');
+    const end = new Date(goals.targetDate+'T00:00:00');
+    const totalDays = Math.max(1, (end - start) / 86400000);
+    const totalLoss = goals.startWeight - goals.goalWeight;
+    const lossPerDay = totalLoss / totalDays;
+
+    const points = [];
+    const numPoints = Math.min(90, totalDays);
+    const step = Math.max(1, Math.floor(totalDays / numPoints));
+    for(let i = 0; i <= totalDays; i += step) {
+      const d = addDays(goals.startDate, i);
+      points.push({date: d, value: Math.round((goals.startWeight - lossPerDay * i) * 10) / 10});
+    }
+    // Ensure endpoint
+    const lastDate = addDays(goals.startDate, totalDays);
+    if(points.length === 0 || points[points.length-1].date !== lastDate) {
+      points.push({date: lastDate, value: goals.goalWeight});
+    }
+    return points;
+  }, [goals]);
+
+  // Stats
+  const currentWeight = weights.length > 0 ? weights[weights.length - 1].value : null;
+  const startingWeight = goals?.startWeight || (weights.length > 0 ? weights[0].value : null);
+  const totalLost = startingWeight && currentWeight ? Math.round((startingWeight - currentWeight) * 10) / 10 : 0;
+  const goalWeight = goals?.goalWeight;
+  const remaining = currentWeight && goalWeight ? Math.round((currentWeight - goalWeight) * 10) / 10 : null;
+
+  // Weekly rate
+  const weeklyRate = useMemo(() => {
+    if(weights.length < 2) return null;
+    const recent = weights.slice(-14);
+    if(recent.length < 2) return null;
+    const days = (new Date(recent[recent.length-1].date+'T00:00:00') - new Date(recent[0].date+'T00:00:00')) / 86400000;
+    if(days < 1) return null;
+    const diff = recent[0].value - recent[recent.length-1].value;
+    return Math.round((diff / days * 7) * 10) / 10;
+  }, [weights]);
+
+  // ETA
+  const eta = useMemo(() => {
+    if(!weeklyRate || weeklyRate <= 0 || !remaining || remaining <= 0) return null;
+    return Math.ceil(remaining / weeklyRate);
+  }, [weeklyRate, remaining]);
+
+  // BMI
+  const bmi = currentWeight && goals?.height ? Math.round(currentWeight / ((goals.height/100) ** 2) * 10) / 10 : null;
+  const bmiCategory = bmi ? (bmi < 18.5 ? 'Underweight' : bmi < 25 ? 'Normal' : bmi < 30 ? 'Overweight' : 'Obese') : '';
+
+  // Latest measurements
+  const latestMeasure = measurements.length > 0 ? measurements[measurements.length - 1] : null;
+  const firstMeasure = measurements.length > 0 ? measurements[0] : null;
+
+  return (
+    <Fragment>
+      {/* Goal setup prompt or summary */}
+      {!goals || !goals.startWeight ? (
+        <div style={{background:C.surface,border:`1.5px dashed ${C.accent}`,borderRadius:16,padding:24,marginBottom:12,textAlign:'center'}}>
+          <p style={{fontSize:28,marginBottom:8}}>🎯</p>
+          <p style={{color:C.ink,fontWeight:700,fontSize:16,marginBottom:4}}>Set Your Goals</p>
+          <p style={{color:C.sub,fontSize:13,marginBottom:16}}>Enter your starting weight, goal weight, and target date to see projections</p>
+          <button onClick={()=>setShowGoals(true)} style={{padding:'12px 24px',borderRadius:12,background:C.primary,color:'#fff',fontWeight:600,fontSize:14}}>
+            Set Goals
+          </button>
+        </div>
+      ) : (
+        <Fragment>
+          {/* Stats row */}
+          <div style={{display:'flex',gap:8,marginBottom:12}}>
+            <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:14,textAlign:'center'}}>
+              <p style={{fontSize:11,color:C.sub,fontWeight:600}}>CURRENT</p>
+              <p style={{fontSize:20,fontWeight:700,color:C.ink,marginTop:4}}>{currentWeight || '—'}</p>
+              <p style={{fontSize:10,color:C.sub}}>kg</p>
+            </div>
+            <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:14,textAlign:'center'}}>
+              <p style={{fontSize:11,color:C.sub,fontWeight:600}}>LOST</p>
+              <p style={{fontSize:20,fontWeight:700,color:totalLost>0?C.primary:C.ink,marginTop:4}}>{totalLost > 0 ? '-'+totalLost : totalLost}</p>
+              <p style={{fontSize:10,color:C.sub}}>kg</p>
+            </div>
+            <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:14,textAlign:'center'}}>
+              <p style={{fontSize:11,color:C.sub,fontWeight:600}}>TO GO</p>
+              <p style={{fontSize:20,fontWeight:700,color:C.accent,marginTop:4}}>{remaining != null && remaining > 0 ? remaining : '✓'}</p>
+              <p style={{fontSize:10,color:C.sub}}>{remaining != null && remaining > 0 ? 'kg' : 'Goal reached!'}</p>
+            </div>
+          </div>
+
+          {/* Rate + ETA + BMI */}
+          <div style={{display:'flex',gap:8,marginBottom:12}}>
+            <div style={{flex:1,background:C.primarySoft,borderRadius:14,padding:14,textAlign:'center'}}>
+              <p style={{fontSize:10,color:C.primary,fontWeight:700}}>WEEKLY RATE</p>
+              <p style={{fontSize:16,fontWeight:700,color:C.primaryDark,marginTop:4}}>{weeklyRate != null ? (weeklyRate > 0 ? '-'+weeklyRate : weeklyRate)+' kg/wk' : 'Need data'}</p>
+            </div>
+            {eta && (
+              <div style={{flex:1,background:C.accentSoft,borderRadius:14,padding:14,textAlign:'center'}}>
+                <p style={{fontSize:10,color:C.accent,fontWeight:700}}>ETA</p>
+                <p style={{fontSize:16,fontWeight:700,color:'#8A6D20',marginTop:4}}>~{eta} weeks</p>
+              </div>
+            )}
+            {bmi && (
+              <div style={{flex:1,background:C.surface,border:`1px solid ${C.border}`,borderRadius:14,padding:14,textAlign:'center'}}>
+                <p style={{fontSize:10,color:C.sub,fontWeight:700}}>BMI</p>
+                <p style={{fontSize:16,fontWeight:700,color:C.ink,marginTop:4}}>{bmi}</p>
+                <p style={{fontSize:9,color:C.sub}}>{bmiCategory}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Weight Chart: Actual vs Projection */}
+          <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:16,marginBottom:12}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+              <p style={{color:C.ink,fontWeight:600,fontSize:14}}>⚖️ Weight Progress</p>
+              <button onClick={()=>setShowGoals(true)} style={{fontSize:11,color:C.primary,fontWeight:600}}>Edit Goals</button>
+            </div>
+            <LineChart datasets={[
+              {label:'Actual', data:weights, color:C.primary},
+              {label:'Projected', data:projection, color:C.accent, dashed:true}
+            ]}/>
+            {weights.length < 2 && <p style={{color:C.sub,fontSize:12,textAlign:'center',marginTop:8}}>Log weight daily for trend</p>}
+          </div>
+        </Fragment>
+      )}
+
+      {/* Measurements Chart */}
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:16,padding:16,marginBottom:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <p style={{color:C.ink,fontWeight:600,fontSize:14}}>📏 Body Measurements</p>
+          <button onClick={()=>setShowMeasure(true)} style={{padding:'6px 12px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:11}}>
+            + Log
+          </button>
+        </div>
+
+        {measurements.length > 0 ? (
+          <Fragment>
+            {/* Waist chart */}
+            {measurements.some(m=>m.waist) && (
+              <div style={{marginBottom:12}}>
+                <p style={{fontSize:12,color:C.sub,fontWeight:600,marginBottom:4}}>Waist (cm)</p>
+                <LineChart height={120} showLegend={false} datasets={[
+                  {label:'Waist', data:measurements.filter(m=>m.waist).map(m=>({date:m.date,value:m.waist})), color:C.danger}
+                ]}/>
+                {firstMeasure?.waist && latestMeasure?.waist && (
+                  <p style={{fontSize:11,color:firstMeasure.waist > latestMeasure.waist ? C.primary : C.danger,textAlign:'center',marginTop:4}}>
+                    {firstMeasure.waist > latestMeasure.waist ? '↓' : '↑'} {Math.abs(Math.round((firstMeasure.waist - latestMeasure.waist)*10)/10)} cm change
+                  </p>
+                )}
+              </div>
+            )}
+            {/* Arms chart */}
+            {measurements.some(m=>m.arms) && (
+              <div style={{marginBottom:12}}>
+                <p style={{fontSize:12,color:C.sub,fontWeight:600,marginBottom:4}}>Arms (cm)</p>
+                <LineChart height={120} showLegend={false} datasets={[
+                  {label:'Arms', data:measurements.filter(m=>m.arms).map(m=>({date:m.date,value:m.arms})), color:C.primary}
+                ]}/>
+              </div>
+            )}
+            {/* Chest chart */}
+            {measurements.some(m=>m.chest) && (
+              <div style={{marginBottom:12}}>
+                <p style={{fontSize:12,color:C.sub,fontWeight:600,marginBottom:4}}>Chest (cm)</p>
+                <LineChart height={120} showLegend={false} datasets={[
+                  {label:'Chest', data:measurements.filter(m=>m.chest).map(m=>({date:m.date,value:m.chest})), color:C.accent}
+                ]}/>
+              </div>
+            )}
+            {/* Body fat chart */}
+            {measurements.some(m=>m.bodyFat) && (
+              <div style={{marginBottom:12}}>
+                <p style={{fontSize:12,color:C.sub,fontWeight:600,marginBottom:4}}>Body Fat %</p>
+                <LineChart height={120} showLegend={false} datasets={[
+                  {label:'Body Fat', data:measurements.filter(m=>m.bodyFat).map(m=>({date:m.date,value:m.bodyFat})), color:'#8A7355'}
+                ]}/>
+              </div>
+            )}
+
+            {/* Latest readings */}
+            {latestMeasure && (
+              <div style={{background:C.primarySoft,borderRadius:12,padding:12,marginTop:8}}>
+                <p style={{fontSize:11,color:C.primary,fontWeight:700,marginBottom:6}}>LATEST ({new Date(latestMeasure.date+'T00:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'})})</p>
+                <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+                  {latestMeasure.waist && <span style={{fontSize:12,color:C.ink}}>Waist: <b>{latestMeasure.waist}</b> cm</span>}
+                  {latestMeasure.chest && <span style={{fontSize:12,color:C.ink}}>Chest: <b>{latestMeasure.chest}</b> cm</span>}
+                  {latestMeasure.arms && <span style={{fontSize:12,color:C.ink}}>Arms: <b>{latestMeasure.arms}</b> cm</span>}
+                  {latestMeasure.bodyFat && <span style={{fontSize:12,color:C.ink}}>BF: <b>{latestMeasure.bodyFat}</b>%</span>}
+                </div>
+              </div>
+            )}
+          </Fragment>
+        ) : (
+          <div style={{textAlign:'center',padding:'20px 0'}}>
+            <p style={{fontSize:28,marginBottom:8}}>📏</p>
+            <p style={{color:C.sub,fontSize:13}}>No measurements yet</p>
+            <p style={{color:C.sub,fontSize:11,marginTop:4}}>Log waist, chest, arms weekly to see progress charts</p>
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showGoals && <GoalSetupModal onClose={()=>setShowGoals(false)} onSave={refresh}/>}
+      {showMeasure && <MeasurementsModal dateStr={dateStr} onClose={()=>setShowMeasure(false)} onSave={refresh}/>}
     </Fragment>
   );
 }
