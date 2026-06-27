@@ -92,55 +92,108 @@ const dayLabel = s => {
 
 // ─── DATA: MEALS ────────────────────────────────────
 const BREAKFASTS = [
-  {id:'b1',name:'Classic Protein Oats',cal:449,p:43,c:48,f:10},
-  {id:'b2',name:'Paneer Bhurji + Protein Roti',cal:605,p:47,c:44,f:27},
-  {id:'b3',name:'Moong Dal Chilla (High Protein)',cal:654,p:63.5,c:57.5,f:19},
-  {id:'b4',name:'Protein Poha',cal:711,p:53.5,c:62.5,f:29},
-  {id:'b5',name:'Egg White Omelette + Toast',cal:521,p:66,c:38.5,f:12},
-  {id:'b6',name:'Sattu Paratha (Protein Bomb)',cal:695,p:56.3,c:76,f:18.5},
-  {id:'b7',name:'Protein Smoothie Bowl',cal:537,p:47,c:56,f:15.5},
-  {id:'b8',name:'Besan Chilla + Curd',cal:568,p:54,c:51,f:17},
-  {id:'b9',name:'Masala Oats + Paneer',cal:669,p:57.5,c:51,f:27},
-  {id:'b10',name:'Idli + Sambar',cal:510,p:47,c:58,f:11},
+  {id:'b1',name:'Classic Protein Oats',cal:449,p:43,c:48,f:10,
+    desc:'Oats 50g cooked in water + Amul Protein Milk 250ml (mixed after cooling) + Chia seeds 10g + Honey ½ tsp',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b2',name:'Paneer Bhurji + Protein Roti',cal:605,p:47,c:44,f:27,
+    desc:'Paneer 100g crumbled + 1 Protein Roti (50:50 flour) + Onion, capsicum, tomato sautéed + Amul Blueberry Shake 200ml',
+    drink:'🫐 Amul Blueberry Shake 200ml'},
+  {id:'b3',name:'Moong Dal Chilla (High Protein)',cal:654,p:63.5,c:57.5,f:19,
+    desc:'Moong dal 80g (soaked overnight, ground) + Paneer 50g grated filling + Onion, green chilli + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b4',name:'Protein Poha',cal:711,p:53.5,c:62.5,f:29,
+    desc:'Thin Poha 60g + Paneer 50g cubed + Peanuts 20g + Onion, lemon + Amul Protein Milk 250ml ⚠️ Skip peanuts on rest day',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b5',name:'Egg White Omelette + Toast',cal:521,p:66,c:38.5,f:12,
+    desc:'5 egg whites + 1 whole egg + 2 wheat toast + Onion, capsicum, tomato + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b6',name:'Sattu Paratha (Protein Bomb)',cal:695,p:56.3,c:76,f:18.5,
+    desc:'2 Protein Parathas (60g flour) stuffed with Sattu 40g + Onion, chilli, coriander + Curd 100g + Amul Protein Milk 250ml ⚠️ Heavy training days only',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b7',name:'Protein Smoothie Bowl',cal:537,p:47,c:56,f:15.5,
+    desc:'Amul Protein Milk 250ml blended with frozen banana + Oats 30g + Chia 10g + Basil seeds 10g + PB 10g on top',
+    drink:'🥛 Amul Protein Milk 250ml (blended in)'},
+  {id:'b8',name:'Besan Chilla + Curd',cal:568,p:54,c:51,f:17,
+    desc:'Besan 60g batter + Onion, tomato, chilli + Curd 150g + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b9',name:'Masala Oats + Paneer',cal:669,p:57.5,c:51,f:27,
+    desc:'Oats 50g + Paneer 75g cubed + Mixed veggies + Onion, tomato + Amul Protein Milk 250ml ⚠️ Reduce paneer to 50g on rest days',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'b10',name:'Idli + Sambar',cal:510,p:47,c:58,f:11,
+    desc:'3 Idlis + Sambar 150ml (toor dal + drumstick + veggies) + Coconut chutney 30g + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
 ];
 const LUNCHES = [
-  {id:'l11',name:'Paneer Rice Bowl',cal:725,p:51,c:74,f:25},
-  {id:'l12',name:'Rajma + Rice',cal:710,p:56,c:88,f:15.5},
-  {id:'l13',name:'Chole + Protein Roti',cal:778,p:66,c:96,f:17},
-  {id:'l14',name:'Dal Khichdi + Paneer Tikka',cal:772,p:63.5,c:64,f:28.8},
-  {id:'l15',name:'South Indian Thali',cal:670,p:55,c:86,f:13},
-  {id:'l16',name:'Palak Paneer + Rice',cal:737,p:60.5,c:60,f:29},
-  {id:'l17',name:'Kadhi Chawal + Paneer Pakoda',cal:815,p:61,c:80,f:27.5},
-  {id:'l18',name:'Peanut Rice + Veggie Stir Fry',cal:641,p:49,c:64,f:23.5},
-  {id:'l19',name:'Moong Dal + Rice + Paneer Stir Fry',cal:718,p:61.5,c:64,f:23.9},
-  {id:'l20',name:'Sprouts Pulao + Raita',cal:623,p:55.5,c:72,f:13.4},
+  {id:'l11',name:'Paneer Rice Bowl',cal:725,p:51,c:74,f:25,
+    desc:'Rice 150g cooked + Paneer 100g grilled + Mixed veggies 80g + Thin dal 100ml + Curd 100g + Amul Blueberry Shake 200ml',
+    drink:'🫐 Amul Blueberry Shake 200ml'},
+  {id:'l12',name:'Rajma + Rice',cal:710,p:56,c:88,f:15.5,
+    desc:'Rice 150g + Rajma 150g cooked in onion-tomato gravy + Raita (curd + cucumber) + Amul Protein Milk 250ml ⚠️ Best for leg day',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l13',name:'Chole + Protein Roti',cal:778,p:66,c:96,f:17,
+    desc:'2 Protein Rotis + Chole 150g in masala gravy + Green salad + Amul Protein Milk 250ml ⚠️ Use 1.5 roti on moderate days',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l14',name:'Dal Khichdi + Paneer Tikka',cal:772,p:63.5,c:64,f:28.8,
+    desc:'Rice 40g + Moong dal 30g pressure cooked + Veggies + Paneer Tikka 100g (grilled, marinated in curd) + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l15',name:'South Indian Thali',cal:670,p:55,c:86,f:13,
+    desc:'Rice 150g + Thick Sambar 200ml + Poriyal (beans/carrot) + Rasam + Roasted papad + Curd 100g + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l16',name:'Palak Paneer + Rice',cal:737,p:60.5,c:60,f:29,
+    desc:'Rice 150g + Paneer 100g in spinach 150g puree + Onion-tomato base + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l17',name:'Kadhi Chawal + Paneer Pakoda',cal:815,p:61,c:80,f:27.5,
+    desc:'Rice 150g + Kadhi (besan 30g + curd 150g) + Paneer pakodas (50g paneer + 15g besan) + Amul Protein Milk 250ml ⚠️ Leg/back days only',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l18',name:'Peanut Rice + Veggie Stir Fry',cal:641,p:49,c:64,f:23.5,
+    desc:'Rice 150g tempered with crushed peanuts 30g + Mixed veggies 120g stir fried + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l19',name:'Moong Dal + Rice + Paneer Stir Fry',cal:718,p:61.5,c:64,f:23.9,
+    desc:'Rice 120g + Thick moong dal 150ml + Paneer 75g stir fried with capsicum + Ghee tadka + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
+  {id:'l20',name:'Sprouts Pulao + Raita',cal:623,p:55.5,c:72,f:13.4,
+    desc:'Rice 120g + Mixed sprouts 100g (moong + chana) + Onion, peas + Raita (curd + onion + cucumber) + Amul Protein Milk 250ml',
+    drink:'🥛 Amul Protein Milk 250ml'},
 ];
 const DINNERS = [
-  {id:'d21',name:'Paneer Tikka + Protein Roti + Salad',cal:532,p:32,c:61,f:19},
-  {id:'d22',name:'Dal Tadka + 1.5 Roti',cal:477,p:28.5,c:76,f:8},
-  {id:'d23',name:'Curd Rice + Poriyal (Light)',cal:348,p:10,c:58,f:9.4},
-  {id:'d24',name:'Methi Roti + Paneer Curry',cal:623,p:33,c:61,f:28},
-  {id:'d25',name:'Veggie Uttapam + Sambar',cal:466,p:21,c:48.5,f:22},
-  {id:'d26',name:'Vegetable Khichdi (Recovery)',cal:409,p:16,c:65,f:9.8},
-  {id:'d27',name:'Paneer Stir Fry + Protein Roti',cal:580,p:34,c:60,f:24},
-  {id:'d28',name:'Paneer Dosa',cal:537,p:24.3,c:49,f:28},
-  {id:'d29',name:'Roti + Bhindi/Beans Sabzi + Dal',cal:467,p:24.5,c:69,f:13.5},
-  {id:'d30',name:'Protein Upma (Quick & Light)',cal:435,p:19,c:46.5,f:20.5},
+  {id:'d21',name:'Paneer Tikka + Protein Roti + Salad',cal:532,p:32,c:61,f:19,
+    desc:'2 Protein Rotis + Paneer 80g marinated in curd+tikka masala, grilled + Capsicum, onion grilled + Green salad'},
+  {id:'d22',name:'Dal Tadka + 1.5 Roti',cal:477,p:28.5,c:76,f:8,
+    desc:'1.5 Protein Rotis + Thick toor dal 200ml with lauki/spinach + Ghee tadka (mustard, cumin, garlic). Tip: add 50g paneer for +9g protein'},
+  {id:'d23',name:'Curd Rice + Poriyal (Light)',cal:348,p:10,c:58,f:9.4,
+    desc:'Rice 120g mixed with curd 150g + Beans poriyal 80g + Pickle. ⚠️ Low protein — Protein Milk at 10:30 PM covers the gap (total 45g)'},
+  {id:'d24',name:'Methi Roti + Paneer Curry',cal:623,p:33,c:61,f:28,
+    desc:'2 Methi Protein Rotis + Paneer 80g in light makhani gravy (cashew paste sparingly, 2-3 cashews only)'},
+  {id:'d25',name:'Veggie Uttapam + Sambar',cal:466,p:21,c:48.5,f:22,
+    desc:'2 Uttapams + Crumbled paneer 50g topping + Coconut chutney + Sambar 150ml + Onion, tomato, capsicum'},
+  {id:'d26',name:'Vegetable Khichdi (Recovery)',cal:409,p:16,c:65,f:9.8,
+    desc:'Rice 40g + Moong dal 40g + Veggies (lauki, carrot, peas) pressure cooked + Ghee + Roasted papad. Light & easy to digest'},
+  {id:'d27',name:'Paneer Stir Fry + Protein Roti',cal:580,p:34,c:60,f:24,
+    desc:'2 Protein Rotis + Paneer 80g cubed, stir fried with broccoli, beans, capsicum + Soy sauce, garlic'},
+  {id:'d28',name:'Paneer Dosa',cal:537,p:24.3,c:49,f:28,
+    desc:'2 Crispy dosas + Spiced paneer 80g filling (turmeric, onion, chilli) + Coconut chutney + Sambar 100ml'},
+  {id:'d29',name:'Roti + Bhindi/Beans Sabzi + Dal',cal:467,p:24.5,c:69,f:13.5,
+    desc:'2 Protein Rotis + Bhindi dry roast (or beans tempered with mustard, coconut) + Thin moong/toor dal + Onion salad'},
+  {id:'d30',name:'Protein Upma (Quick & Light)',cal:435,p:19,c:46.5,f:20.5,
+    desc:'Rava 50g dry roasted + Mixed veggies 60g + Paneer 50g cubes + Peanuts 10g + Mustard, curry leaves'},
 ];
 const SNACKS_PRE = [
-  {id:'sp1',name:'1 banana',cal:89,p:1},{id:'sp2',name:'2-3 dates',cal:77,p:0.5},
-  {id:'sp3',name:'Peanut chikki (1 bar)',cal:85,p:3},{id:'sp4',name:'Dates (2) + Peanuts (15g)',cal:169,p:4.5},
+  {id:'sp1',name:'1 banana',cal:89,p:1,desc:'Quick energy before workout'},
+  {id:'sp2',name:'2-3 dates',cal:77,p:0.5,desc:'Natural sugars for workout fuel'},
+  {id:'sp3',name:'Peanut chikki (1 bar)',cal:85,p:3,desc:'Slow energy + protein'},
+  {id:'sp4',name:'Dates (2) + Peanuts (15g)',cal:169,p:4.5,desc:'Best combo: sugar + healthy fats'},
 ];
 const SNACKS_AFT = [
-  {id:'sa1',name:'Paneer cubes (60g) + cucumber',cal:167,p:11},
-  {id:'sa2',name:'Roasted chana (40g)',cal:140,p:8},
-  {id:'sa3',name:'Curd (150g) + basil seeds (10g)',cal:138,p:7},
-  {id:'sa4',name:'Sprouts chaat (80g)',cal:82,p:6.5},
-  {id:'sa5',name:'Apple + peanut butter (15g)',cal:166,p:4.5},
-  {id:'sa6',name:'Guava (1 medium)',cal:68,p:3},
+  {id:'sa1',name:'Paneer cubes (60g) + cucumber',cal:167,p:11,desc:'High protein, refreshing'},
+  {id:'sa2',name:'Roasted chana (40g)',cal:140,p:8,desc:'Crunchy, filling, good protein'},
+  {id:'sa3',name:'Curd (150g) + basil seeds (10g)',cal:138,p:7,desc:'Gut-friendly, keeps you full'},
+  {id:'sa4',name:'Sprouts chaat (80g)',cal:82,p:6.5,desc:'Low cal, high protein per calorie'},
+  {id:'sa5',name:'Apple + peanut butter (15g)',cal:166,p:4.5,desc:'Fibre + healthy fats'},
+  {id:'sa6',name:'Guava (1 medium)',cal:68,p:3,desc:'BEST fruit for fat loss — low GI, high fibre'},
 ];
 const SNACKS_HRX = [
-  {id:'sh1',name:'1 small banana',cal:72,p:0},{id:'sh2',name:'2-3 small dates',cal:70,p:0},
+  {id:'sh1',name:'1 small banana',cal:72,p:0,desc:'Quick energy before HRX session'},
+  {id:'sh2',name:'2-3 small dates',cal:70,p:0,desc:'Natural pre-HRX fuel'},
 ];
 
 // ─── DATA: AMUL DRINKS (NEW!) ───────────────────────
@@ -163,8 +216,9 @@ const SNACK_SLOTS = [
   {key:'snackHRX',label:'Pre-HRX Snack',time:'7:00 PM',options:SNACKS_HRX},
 ];
 const ALL_SLOTS = [...MEAL_SLOTS, ...SNACK_SLOTS];
-const findMeal = (key, id) => {
+const findMeal = (key, id, customMeals) => {
   if(!id) return null;
+  if(id === '__custom__' && customMeals && customMeals[key]) return customMeals[key];
   const slot = ALL_SLOTS.find(s=>s.key===key);
   return slot ? slot.options.find(o=>o.id===id) || null : null;
 };
@@ -238,7 +292,7 @@ function getActiveSuppItems(isRestDay, dateStr) {
 const DATA_VERSION = 2;
 
 function emptyLog() {
-  return { restDay:false, water:0, hydration:{}, supplements:{}, meals:{breakfast:null,lunch:null,dinner:null,snackPre:null,snackAfternoon:null,snackHRX:null}, drinks:[] };
+  return { restDay:false, water:0, hydration:{}, supplements:{}, meals:{breakfast:null,lunch:null,dinner:null,snackPre:null,snackAfternoon:null,snackHRX:null}, drinks:[], customMeals:{} };
 }
 
 function loadLog(dateStr) {
@@ -246,7 +300,7 @@ function loadLog(dateStr) {
     const raw = localStorage.getItem(`log:${dateStr}`);
     if(raw) {
       const d = JSON.parse(raw);
-      return {...emptyLog(), ...d, meals:{...emptyLog().meals, ...(d.meals||{})}, drinks: d.drinks || []};
+      return {...emptyLog(), ...d, meals:{...emptyLog().meals, ...(d.meals||{})}, drinks: d.drinks || [], customMeals: d.customMeals || {}};
     }
   } catch(e) {}
   return emptyLog();
@@ -353,34 +407,70 @@ function Modal({children, onClose}) {
 }
 
 // ─── MEAL PICKER MODAL ──────────────────────────────
-function MealPicker({slot, selectedId, onSelect, onClose}) {
+function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
+  const [showCustom, setShowCustom] = React.useState(false);
+  const [cName, setCName] = React.useState('');
+  const [cCal, setCCal] = React.useState('');
+  const [cProt, setCProt] = React.useState('');
+
+  const handleCustomSave = () => {
+    if(!cName.trim() || !cCal) return;
+    onCustom({name:cName.trim(), cal:parseInt(cCal)||0, p:parseInt(cProt)||0, c:0, f:0});
+    onClose();
+  };
+
   return (
     <Modal onClose={onClose}>
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px 8px'}}>
         <div>
           <h3 style={{color:C.ink,fontWeight:700,fontSize:16}}>{slot.label}</h3>
-          <p style={{color:C.sub,fontSize:12}}>{slot.time} · pick one</p>
+          <p style={{color:C.sub,fontSize:12}}>{slot.time} · pick one or add custom</p>
         </div>
         <button onClick={onClose} style={{background:C.surface,width:32,height:32,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <Icon d={Icons.x} size={16} color={C.ink}/>
         </button>
       </div>
-      <div style={{overflowY:'auto',padding:'4px 16px 24px'}}>
+      <div style={{overflowY:'auto',padding:'4px 16px 24px',maxHeight:'70vh'}}>
         {selectedId && (
           <button onClick={()=>{onSelect(null);onClose()}} style={{width:'100%',color:C.danger,border:`1px dashed ${C.danger}`,fontSize:12,fontWeight:600,padding:'8px',borderRadius:12,marginBottom:8}}>
             Clear selection
           </button>
         )}
+
+        {/* Custom Meal Entry */}
+        {!showCustom ? (
+          <button onClick={()=>setShowCustom(true)} style={{width:'100%',textAlign:'center',borderRadius:16,padding:'12px 16px',marginBottom:12,background:'#FFF8E8',border:`1.5px dashed ${C.accent}`,color:C.accent,fontWeight:600,fontSize:13}}>
+            ✏️ Add Custom Meal
+          </button>
+        ) : (
+          <div style={{background:'#FFF8E8',border:`1.5px solid ${C.accent}`,borderRadius:16,padding:16,marginBottom:12}}>
+            <p style={{fontWeight:700,fontSize:13,color:C.ink,marginBottom:8}}>✏️ Custom Meal</p>
+            <input value={cName} onChange={e=>setCName(e.target.value)} placeholder="Meal name" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13,marginBottom:6}}/>
+            <div style={{display:'flex',gap:8}}>
+              <input value={cCal} onChange={e=>setCCal(e.target.value)} placeholder="Calories" type="number" style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
+              <input value={cProt} onChange={e=>setCProt(e.target.value)} placeholder="Protein (g)" type="number" style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:8}}>
+              <button onClick={()=>setShowCustom(false)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12,color:C.sub}}>Cancel</button>
+              <button onClick={handleCustomSave} disabled={!cName.trim()||!cCal} style={{flex:1,padding:'8px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12,opacity:(!cName.trim()||!cCal)?0.5:1}}>Save</button>
+            </div>
+          </div>
+        )}
+
         {slot.options.map(item => {
           const active = item.id === selectedId;
           return (
-            <button key={item.id} onClick={()=>{onSelect(item.id);onClose()}} style={{width:'100%',textAlign:'left',borderRadius:16,padding:'12px 16px',marginBottom:8,display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,background:active?C.primarySoft:C.surface,border:`1.5px solid ${active?C.primary:C.border}`}}>
-              <span style={{color:C.ink,fontWeight:500,fontSize:14,flex:1}}>{item.name}</span>
-              <span style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:4,flexShrink:0}}>
-                <span style={{color:C.primaryDark,fontSize:12,fontWeight:700}}>{item.cal} kcal</span>
-                <span style={{color:C.sub,fontSize:11}}>{item.p}g protein</span>
-              </span>
-              {active && <span style={{background:C.primary,width:20,height:20,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center'}}><Icon d={Icons.check} size={12} color="#fff"/></span>}
+            <button key={item.id} onClick={()=>{onSelect(item.id);onClose()}} style={{width:'100%',textAlign:'left',borderRadius:16,padding:'12px 16px',marginBottom:8,display:'flex',flexDirection:'column',gap:4,background:active?C.primarySoft:C.surface,border:`1.5px solid ${active?C.primary:C.border}`}}>
+              <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',width:'100%'}}>
+                <span style={{color:C.ink,fontWeight:500,fontSize:14,flex:1}}>{item.name}</span>
+                <span style={{display:'flex',flexDirection:'column',alignItems:'flex-end',gap:2,flexShrink:0}}>
+                  <span style={{color:C.primaryDark,fontSize:12,fontWeight:700}}>{item.cal} kcal</span>
+                  <span style={{color:C.sub,fontSize:11}}>{item.p}g protein</span>
+                </span>
+                {active && <span style={{background:C.primary,width:20,height:20,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',marginLeft:6}}><Icon d={Icons.check} size={12} color="#fff"/></span>}
+              </div>
+              {item.desc && <p style={{color:C.sub,fontSize:11,lineHeight:'1.4',margin:0,paddingRight:30}}>{item.desc}</p>}
+              {item.drink && <p style={{color:C.primary,fontSize:11,fontWeight:600,margin:0}}>↳ {item.drink}</p>}
             </button>
           );
         })}
@@ -537,7 +627,7 @@ function App() {
     if(!log) return {cal:0,p:0,c:0,f:0};
     let cal=0,p=0,c=0,f=0;
     ALL_SLOTS.forEach(s => {
-      const m = findMeal(s.key, log.meals[s.key]);
+      const m = findMeal(s.key, log.meals[s.key], log.customMeals);
       if(m) { cal+=m.cal; p+=(m.p||0); c+=(m.c||0); f+=(m.f||0); }
     });
     // Hydration h9 (protein milk)
@@ -679,7 +769,7 @@ function App() {
               {/* Meals */}
               <Section icon={<Icon d={Icons.fork} size={18} color={C.primary}/>} title="Meals" badge={`${MEAL_SLOTS.filter(s=>log.meals[s.key]).length} / ${MEAL_SLOTS.length}`}>
                 {MEAL_SLOTS.map(slot => {
-                  const meal = findMeal(slot.key, log.meals[slot.key]);
+                  const meal = findMeal(slot.key, log.meals[slot.key], log.customMeals);
                   return (
                     <button key={slot.key} onClick={()=>setModal('meal:'+slot.key)} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 0',textAlign:'left',borderBottom:`1px solid ${C.border}`}}>
                       <div style={{flex:1,minWidth:0}}>
@@ -687,6 +777,8 @@ function App() {
                         {meal ? (
                           <Fragment>
                             <p style={{color:C.ink,fontSize:14,fontWeight:600,marginTop:4}}>{meal.name}</p>
+                            {meal.desc && <p style={{color:C.sub,fontSize:11,marginTop:2,lineHeight:'1.3'}}>{meal.desc}</p>}
+                            {meal.drink && <p style={{color:C.primary,fontSize:11,fontWeight:600,marginTop:2}}>↳ {meal.drink}</p>}
                             <div style={{display:'flex',gap:6,marginTop:4}}><MacroPill value={meal.cal} label="kcal"/><MacroPill value={`${meal.p}g`} label="protein"/></div>
                           </Fragment>
                         ) : <p style={{color:C.sub,fontSize:14,marginTop:4,fontStyle:'italic'}}>Tap to log</p>}
@@ -722,12 +814,17 @@ function App() {
               {/* Snacks */}
               <Section icon={<span style={{fontSize:16}}>🍌</span>} title="Snacks" badge={`${SNACK_SLOTS.filter(s=>!(s.skipOnRest&&log.restDay)&&log.meals[s.key]).length} / ${SNACK_SLOTS.filter(s=>!(s.skipOnRest&&log.restDay)).length}`}>
                 {SNACK_SLOTS.filter(s=>!(s.skipOnRest&&log.restDay)).map(slot => {
-                  const meal = findMeal(slot.key, log.meals[slot.key]);
+                  const meal = findMeal(slot.key, log.meals[slot.key], log.customMeals);
                   return (
                     <button key={slot.key} onClick={()=>setModal('meal:'+slot.key)} style={{width:'100%',display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'12px 0',textAlign:'left',borderBottom:`1px solid ${C.border}`}}>
                       <div style={{flex:1}}>
                         <p style={{fontSize:11,color:C.sub,fontWeight:600,textTransform:'uppercase'}}>{slot.label} · {slot.time}</p>
-                        {meal ? <p style={{color:C.ink,fontSize:14,fontWeight:500,marginTop:4}}>{meal.name}</p> : <p style={{color:C.sub,fontSize:13,marginTop:4,fontStyle:'italic'}}>Tap to log</p>}
+                        {meal ? (
+                          <Fragment>
+                            <p style={{color:C.ink,fontSize:14,fontWeight:500,marginTop:4}}>{meal.name}</p>
+                            {meal.desc && <p style={{color:C.sub,fontSize:11,marginTop:2}}>{meal.desc}</p>}
+                          </Fragment>
+                        ) : <p style={{color:C.sub,fontSize:13,marginTop:4,fontStyle:'italic'}}>Tap to log</p>}
                       </div>
                       <Icon d={Icons.chevR} size={16} color={C.sub}/>
                     </button>
@@ -770,7 +867,15 @@ function App() {
         </div>
 
         {/* Modals */}
-        {activeSlot && <MealPicker slot={activeSlot} selectedId={log.meals[activeSlot.key]} onSelect={id=>update(l=>({...l,meals:{...l.meals,[activeSlot.key]:id}}))} onClose={()=>setModal(null)}/>}
+        {activeSlot && <MealPicker slot={activeSlot} selectedId={log.meals[activeSlot.key]} onSelect={id=>{
+          update(l=>{
+            const newLog = {...l, meals:{...l.meals,[activeSlot.key]:id}};
+            if(!id && l.customMeals && l.customMeals[activeSlot.key]) {
+              const cm = {...l.customMeals}; delete cm[activeSlot.key]; newLog.customMeals = cm;
+            }
+            return newLog;
+          });
+        }} onCustom={custom=>update(l=>({...l,meals:{...l.meals,[activeSlot.key]:'__custom__'},customMeals:{...l.customMeals,[activeSlot.key]:custom}}))} onClose={()=>setModal(null)}/>}
         {modal === 'drinks' && <DrinksPicker drinks={log.drinks||[]} onAdd={id=>update(l=>({...l,drinks:[...(l.drinks||[]),id]}))} onRemove={i=>update(l=>({...l,drinks:l.drinks.filter((_,idx)=>idx!==i)}))} onClose={()=>setModal(null)}/>}
         {modal === 'weight' && <WeightModal dateStr={dateStr} onClose={()=>{setModal(null);setRefresh(r=>r+1)}}/>}
         {modal === 'settings' && <SettingsModal onClose={()=>setModal(null)} onRefresh={()=>setRefresh(r=>r+1)}/>}
@@ -804,13 +909,13 @@ function TimelineView({log, dateStr, update, setModal, onToggleTimeView}) {
 
     // Meal slots
     MEAL_SLOTS.forEach(slot => {
-      const meal = findMeal(slot.key, log.meals[slot.key]);
+      const meal = findMeal(slot.key, log.meals[slot.key], log.customMeals);
       list.push({type:'meal', time:slot.time, sortKey:parseTime(slot.time), id:slot.key, label:slot.label, sub:meal?meal.name:null, done:!!meal, slotKey:slot.key, meal});
     });
 
     // Snack slots
     SNACK_SLOTS.filter(s=>!(s.skipOnRest&&isRest)).forEach(slot => {
-      const meal = findMeal(slot.key, log.meals[slot.key]);
+      const meal = findMeal(slot.key, log.meals[slot.key], log.customMeals);
       list.push({type:'snack', time:slot.time, sortKey:parseTime(slot.time), id:slot.key, label:slot.label, sub:meal?meal.name:null, done:!!meal, slotKey:slot.key, meal});
     });
 
