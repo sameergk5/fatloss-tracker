@@ -412,10 +412,42 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
   const [cName, setCName] = React.useState('');
   const [cCal, setCCal] = React.useState('');
   const [cProt, setCProt] = React.useState('');
+  const [cCarb, setCCarb] = React.useState('');
+  const [cFat, setCFat] = React.useState('');
+  const [searchQ, setSearchQ] = React.useState('');
+  const [searching, setSearching] = React.useState(false);
+  const [searchResults, setSearchResults] = React.useState(null);
+  const [searchErr, setSearchErr] = React.useState('');
+
+  const doSearch = async () => {
+    if(!searchQ.trim()) return;
+    const key = localStorage.getItem('pref:calorieNinjasKey');
+    if(!key) { setSearchErr('Add API key in Settings ⚙️ first'); return; }
+    setSearching(true); setSearchErr(''); setSearchResults(null);
+    try {
+      const resp = await fetch(`https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(searchQ.trim())}`, {
+        headers: {'X-Api-Key': key}
+      });
+      if(!resp.ok) throw new Error(resp.status === 401 ? 'Invalid API key' : `Error ${resp.status}`);
+      const data = await resp.json();
+      if(!data.items || data.items.length === 0) { setSearchErr('No results. Try "1 samosa" or "100g paneer"'); }
+      else { setSearchResults(data.items); }
+    } catch(e) { setSearchErr(e.message); }
+    setSearching(false);
+  };
+
+  const applyResult = (item) => {
+    setCName(item.name.charAt(0).toUpperCase() + item.name.slice(1));
+    setCCal(Math.round(item.calories).toString());
+    setCProt(Math.round(item.protein_g*10)/10 + '');
+    setCCarb(Math.round(item.carbohydrates_total_g*10)/10 + '');
+    setCFat(Math.round(item.fat_total_g*10)/10 + '');
+    setSearchResults(null);
+  };
 
   const handleCustomSave = () => {
     if(!cName.trim() || !cCal) return;
-    onCustom({name:cName.trim(), cal:parseInt(cCal)||0, p:parseInt(cProt)||0, c:0, f:0});
+    onCustom({name:cName.trim(), cal:parseInt(cCal)||0, p:parseFloat(cProt)||0, c:parseFloat(cCarb)||0, f:parseFloat(cFat)||0});
     onClose();
   };
 
@@ -424,7 +456,7 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
       <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'16px 20px 8px'}}>
         <div>
           <h3 style={{color:C.ink,fontWeight:700,fontSize:16}}>{slot.label}</h3>
-          <p style={{color:C.sub,fontSize:12}}>{slot.time} · pick one or add custom</p>
+          <p style={{color:C.sub,fontSize:12}}>{slot.time} · pick one or search food</p>
         </div>
         <button onClick={onClose} style={{background:C.surface,width:32,height:32,borderRadius:16,display:'flex',alignItems:'center',justifyContent:'center'}}>
           <Icon d={Icons.x} size={16} color={C.ink}/>
@@ -437,20 +469,51 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
           </button>
         )}
 
-        {/* Custom Meal Entry */}
+        {/* Custom Meal with Food Search */}
         {!showCustom ? (
           <button onClick={()=>setShowCustom(true)} style={{width:'100%',textAlign:'center',borderRadius:16,padding:'12px 16px',marginBottom:12,background:'#FFF8E8',border:`1.5px dashed ${C.accent}`,color:C.accent,fontWeight:600,fontSize:13}}>
-            ✏️ Add Custom Meal
+            🔍 Search Food / Add Custom Meal
           </button>
         ) : (
           <div style={{background:'#FFF8E8',border:`1.5px solid ${C.accent}`,borderRadius:16,padding:16,marginBottom:12}}>
-            <p style={{fontWeight:700,fontSize:13,color:C.ink,marginBottom:8}}>✏️ Custom Meal</p>
-            <input value={cName} onChange={e=>setCName(e.target.value)} placeholder="Meal name" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13,marginBottom:6}}/>
-            <div style={{display:'flex',gap:8}}>
-              <input value={cCal} onChange={e=>setCCal(e.target.value)} placeholder="Calories" type="number" style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
-              <input value={cProt} onChange={e=>setCProt(e.target.value)} placeholder="Protein (g)" type="number" style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
+            {/* Search bar */}
+            <p style={{fontWeight:700,fontSize:13,color:C.ink,marginBottom:8}}>🔍 Search Food</p>
+            <div style={{display:'flex',gap:6,marginBottom:6}}>
+              <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doSearch()}
+                placeholder='e.g. "1 samosa" or "100g paneer"' style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
+              <button onClick={doSearch} disabled={searching} style={{padding:'8px 14px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12,opacity:searching?0.6:1}}>
+                {searching ? '...' : '🔍'}
+              </button>
             </div>
-            <div style={{display:'flex',gap:8,marginTop:8}}>
+            {searchErr && <p style={{color:C.danger,fontSize:11,marginBottom:6}}>{searchErr}</p>}
+
+            {/* Search results */}
+            {searchResults && (
+              <div style={{marginBottom:10,maxHeight:180,overflowY:'auto'}}>
+                {searchResults.map((item, i) => (
+                  <button key={i} onClick={()=>applyResult(item)} style={{width:'100%',textAlign:'left',padding:'8px 10px',borderRadius:8,marginBottom:4,background:C.surface,border:`1px solid ${C.border}`,fontSize:12}}>
+                    <span style={{fontWeight:600,color:C.ink}}>{item.name}</span>
+                    <span style={{color:C.sub,marginLeft:8}}>{Math.round(item.calories)} cal · {Math.round(item.protein_g)}g P · {Math.round(item.carbohydrates_total_g)}g C · {Math.round(item.fat_total_g)}g F</span>
+                    <span style={{color:C.sub,fontSize:10,marginLeft:4}}>(per {Math.round(item.serving_size_g)}g)</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Manual entry (auto-filled after search) */}
+            <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
+              <p style={{fontWeight:600,fontSize:12,color:C.sub,marginBottom:6}}>✏️ Or enter manually</p>
+              <input value={cName} onChange={e=>setCName(e.target.value)} placeholder="Meal name" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13,marginBottom:6}}/>
+              <div style={{display:'flex',gap:6,marginBottom:6}}>
+                <input value={cCal} onChange={e=>setCCal(e.target.value)} placeholder="Calories" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+                <input value={cProt} onChange={e=>setCProt(e.target.value)} placeholder="Protein" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+              </div>
+              <div style={{display:'flex',gap:6}}>
+                <input value={cCarb} onChange={e=>setCCarb(e.target.value)} placeholder="Carbs" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+                <input value={cFat} onChange={e=>setCFat(e.target.value)} placeholder="Fat" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+              </div>
+            </div>
+            <div style={{display:'flex',gap:8,marginTop:10}}>
               <button onClick={()=>setShowCustom(false)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12,color:C.sub}}>Cancel</button>
               <button onClick={handleCustomSave} disabled={!cName.trim()||!cCal} style={{flex:1,padding:'8px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12,opacity:(!cName.trim()||!cCal)?0.5:1}}>Save</button>
             </div>
@@ -557,6 +620,7 @@ function WeightModal({dateStr, onClose}) {
 function SettingsModal({onClose, onRefresh}) {
   const fileRef = useRef(null);
   const [msg, setMsg] = useState('');
+  const [apiKey, setApiKey] = useState(()=>localStorage.getItem('pref:calorieNinjasKey')||'');
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if(!file) return;
@@ -566,10 +630,27 @@ function SettingsModal({onClose, onRefresh}) {
       onRefresh();
     } catch(err) { setMsg('❌ Import failed: '+err.message); }
   };
+  const saveApiKey = () => {
+    localStorage.setItem('pref:calorieNinjasKey', apiKey.trim());
+    setMsg('✅ API key saved!');
+  };
   return (
     <Modal onClose={onClose}>
       <div style={{padding:'24px 20px'}}>
-        <h3 style={{color:C.ink,fontWeight:700,fontSize:16,marginBottom:16}}>⚙️ Data & Backup</h3>
+        <h3 style={{color:C.ink,fontWeight:700,fontSize:16,marginBottom:16}}>⚙️ Settings</h3>
+
+        {/* Food Search API Key */}
+        <div style={{background:C.primarySoft,borderRadius:12,padding:14,marginBottom:16}}>
+          <p style={{fontWeight:600,fontSize:13,color:C.ink,marginBottom:6}}>🔍 Food Search (CalorieNinjas)</p>
+          <p style={{color:C.sub,fontSize:11,marginBottom:8}}>Free API key from <a href="https://calorieninjas.com/api" target="_blank" style={{color:C.primary}}>calorieninjas.com/api</a> · 10k searches/month</p>
+          <div style={{display:'flex',gap:6}}>
+            <input value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="Paste API key here" type="password" style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
+            <button onClick={saveApiKey} style={{padding:'8px 14px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12}}>Save</button>
+          </div>
+        </div>
+
+        {/* Backup */}
+        <p style={{fontWeight:600,fontSize:13,color:C.ink,marginBottom:8}}>💾 Data & Backup</p>
         <button onClick={exportAll} style={{width:'100%',padding:'14px',borderRadius:12,background:C.primary,color:'#fff',fontWeight:600,marginBottom:10,display:'flex',alignItems:'center',justifyContent:'center',gap:8}}>
           <Icon d={Icons.download} size={16} color="#fff"/> Export All Data (JSON)
         </button>
