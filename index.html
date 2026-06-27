@@ -421,8 +421,7 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
 
   const doSearch = async () => {
     if(!searchQ.trim()) return;
-    const key = localStorage.getItem('pref:calorieNinjasKey');
-    if(!key) { setSearchErr('Add API key in Settings ⚙️ first'); return; }
+    const key = localStorage.getItem('pref:calorieNinjasKey') || 'xvd9RtPCfgRJam//pFeJdw==XElBwEUvEShSBlUm';
     setSearching(true); setSearchErr(''); setSearchResults(null);
     try {
       const resp = await fetch(`https://api.calorieninjas.com/v1/nutrition?query=${encodeURIComponent(searchQ.trim())}`, {
@@ -620,7 +619,7 @@ function WeightModal({dateStr, onClose}) {
 function SettingsModal({onClose, onRefresh}) {
   const fileRef = useRef(null);
   const [msg, setMsg] = useState('');
-  const [apiKey, setApiKey] = useState(()=>localStorage.getItem('pref:calorieNinjasKey')||'');
+  const [apiKey, setApiKey] = useState(()=>localStorage.getItem('pref:calorieNinjasKey')||'xvd9RtPCfgRJam//pFeJdw==XElBwEUvEShSBlUm');
   const handleImport = async (e) => {
     const file = e.target.files[0];
     if(!file) return;
