@@ -447,6 +447,7 @@ function Modal({children, onClose}) {
 // ─── MEAL PICKER MODAL ──────────────────────────────
 function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
   const [showCustom, setShowCustom] = React.useState(false);
+  const [addedItems, setAddedItems] = React.useState([]);
   const [cName, setCName] = React.useState('');
   const [cCal, setCCal] = React.useState('');
   const [cProt, setCProt] = React.useState('');
@@ -473,18 +474,35 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
     setSearching(false);
   };
 
-  const applyResult = (item) => {
-    setCName(item.name.charAt(0).toUpperCase() + item.name.slice(1));
-    setCCal(Math.round(item.calories).toString());
-    setCProt(Math.round(item.protein_g*10)/10 + '');
-    setCCarb(Math.round(item.carbohydrates_total_g*10)/10 + '');
-    setCFat(Math.round(item.fat_total_g*10)/10 + '');
-    setSearchResults(null);
+  const addFromSearch = (item) => {
+    setAddedItems(prev => [...prev, {
+      name: item.name.charAt(0).toUpperCase() + item.name.slice(1),
+      cal: Math.round(item.calories),
+      p: Math.round(item.protein_g*10)/10,
+      c: Math.round(item.carbohydrates_total_g*10)/10,
+      f: Math.round(item.fat_total_g*10)/10
+    }]);
+    setSearchResults(null); setSearchQ('');
   };
 
-  const handleCustomSave = () => {
+  const addManualItem = () => {
     if(!cName.trim() || !cCal) return;
-    onCustom({name:cName.trim(), cal:parseInt(cCal)||0, p:parseFloat(cProt)||0, c:parseFloat(cCarb)||0, f:parseFloat(cFat)||0});
+    setAddedItems(prev => [...prev, {name:cName.trim(), cal:parseInt(cCal)||0, p:parseFloat(cProt)||0, c:parseFloat(cCarb)||0, f:parseFloat(cFat)||0}]);
+    setCName(''); setCCal(''); setCProt(''); setCCarb(''); setCFat('');
+  };
+
+  const removeItem = (idx) => setAddedItems(prev => prev.filter((_,i) => i !== idx));
+
+  const handleCustomSave = () => {
+    if(addedItems.length === 0) return;
+    const combined = {
+      name: addedItems.map(i=>i.name).join(' + '),
+      cal: addedItems.reduce((s,i)=>s+i.cal, 0),
+      p: Math.round(addedItems.reduce((s,i)=>s+i.p, 0)*10)/10,
+      c: Math.round(addedItems.reduce((s,i)=>s+i.c, 0)*10)/10,
+      f: Math.round(addedItems.reduce((s,i)=>s+i.f, 0)*10)/10
+    };
+    onCustom(combined);
     onClose();
   };
 
@@ -513,11 +531,28 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
           </button>
         ) : (
           <div style={{background:'#FFF8E8',border:`1.5px solid ${C.accent}`,borderRadius:16,padding:16,marginBottom:12}}>
+            {/* Added items list */}
+            {addedItems.length > 0 && (
+              <div style={{marginBottom:10}}>
+                <p style={{fontWeight:700,fontSize:12,color:C.primary,marginBottom:6}}>✅ Added items ({addedItems.length})</p>
+                {addedItems.map((item, i) => (
+                  <div key={i} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'6px 10px',borderRadius:8,marginBottom:3,background:C.surface,border:`1px solid ${C.border}`}}>
+                    <span style={{fontSize:12,color:C.ink,flex:1}}>{item.name} <span style={{color:C.sub}}>({item.cal} cal)</span></span>
+                    <button onClick={()=>removeItem(i)} style={{width:20,height:20,borderRadius:10,background:'#fee',border:'none',color:C.danger,fontSize:14,lineHeight:'1',cursor:'pointer'}}>×</button>
+                  </div>
+                ))}
+                <div style={{display:'flex',justifyContent:'space-between',padding:'4px 10px',fontSize:11,color:C.sub,fontWeight:600}}>
+                  <span>Total: {addedItems.reduce((s,i)=>s+i.cal,0)} cal</span>
+                  <span>P:{Math.round(addedItems.reduce((s,i)=>s+i.p,0))}g C:{Math.round(addedItems.reduce((s,i)=>s+i.c,0))}g F:{Math.round(addedItems.reduce((s,i)=>s+i.f,0))}g</span>
+                </div>
+              </div>
+            )}
+
             {/* Search bar */}
-            <p style={{fontWeight:700,fontSize:13,color:C.ink,marginBottom:8}}>🔍 Search Food</p>
+            <p style={{fontWeight:700,fontSize:13,color:C.ink,marginBottom:8}}>🔍 Search & Add Foods</p>
             <div style={{display:'flex',gap:6,marginBottom:6}}>
               <input value={searchQ} onChange={e=>setSearchQ(e.target.value)} onKeyDown={e=>e.key==='Enter'&&doSearch()}
-                placeholder='e.g. "1 samosa" or "100g paneer"' style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
+                placeholder='e.g. "1 bowl dal" or "100g rice"' style={{flex:1,padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13}}/>
               <button onClick={doSearch} disabled={searching} style={{padding:'8px 14px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12,opacity:searching?0.6:1}}>
                 {searching ? '...' : '🔍'}
               </button>
@@ -527,9 +562,10 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
             {/* Search results */}
             {searchResults && (
               <div style={{marginBottom:10,maxHeight:180,overflowY:'auto'}}>
+                <p style={{fontSize:11,color:C.sub,marginBottom:4}}>Tap to add:</p>
                 {searchResults.map((item, i) => (
-                  <button key={i} onClick={()=>applyResult(item)} style={{width:'100%',textAlign:'left',padding:'8px 10px',borderRadius:8,marginBottom:4,background:C.surface,border:`1px solid ${C.border}`,fontSize:12}}>
-                    <span style={{fontWeight:600,color:C.ink}}>{item.name}</span>
+                  <button key={i} onClick={()=>addFromSearch(item)} style={{width:'100%',textAlign:'left',padding:'8px 10px',borderRadius:8,marginBottom:4,background:C.surface,border:`1px solid ${C.border}`,fontSize:12}}>
+                    <span style={{fontWeight:600,color:C.ink}}>+ {item.name}</span>
                     <span style={{color:C.sub,marginLeft:8}}>{Math.round(item.calories)} cal · {Math.round(item.protein_g)}g P · {Math.round(item.carbohydrates_total_g)}g C · {Math.round(item.fat_total_g)}g F</span>
                     <span style={{color:C.sub,fontSize:10,marginLeft:4}}>(per {Math.round(item.serving_size_g)}g)</span>
                   </button>
@@ -537,10 +573,10 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
               </div>
             )}
 
-            {/* Manual entry (auto-filled after search) */}
+            {/* Manual entry */}
             <div style={{borderTop:`1px solid ${C.border}`,paddingTop:10,marginTop:6}}>
-              <p style={{fontWeight:600,fontSize:12,color:C.sub,marginBottom:6}}>✏️ Or enter manually</p>
-              <input value={cName} onChange={e=>setCName(e.target.value)} placeholder="Meal name" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13,marginBottom:6}}/>
+              <p style={{fontWeight:600,fontSize:12,color:C.sub,marginBottom:6}}>✏️ Or add manually</p>
+              <input value={cName} onChange={e=>setCName(e.target.value)} placeholder="Item name" style={{width:'100%',padding:'8px 12px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:13,marginBottom:6}}/>
               <div style={{display:'flex',gap:6,marginBottom:6}}>
                 <input value={cCal} onChange={e=>setCCal(e.target.value)} placeholder="Calories" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
                 <input value={cProt} onChange={e=>setCProt(e.target.value)} placeholder="Protein" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
@@ -549,10 +585,11 @@ function MealPicker({slot, selectedId, onSelect, onCustom, onClose}) {
                 <input value={cCarb} onChange={e=>setCCarb(e.target.value)} placeholder="Carbs" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
                 <input value={cFat} onChange={e=>setCFat(e.target.value)} placeholder="Fat" type="number" style={{flex:1,padding:'8px 10px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12}}/>
               </div>
+              <button onClick={addManualItem} disabled={!cName.trim()||!cCal} style={{marginTop:6,width:'100%',padding:'8px',borderRadius:8,background:'#e8f5e9',border:`1px solid ${C.primary}`,color:C.primary,fontWeight:600,fontSize:12,opacity:(!cName.trim()||!cCal)?0.5:1}}>+ Add this item</button>
             </div>
             <div style={{display:'flex',gap:8,marginTop:10}}>
-              <button onClick={()=>setShowCustom(false)} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12,color:C.sub}}>Cancel</button>
-              <button onClick={handleCustomSave} disabled={!cName.trim()||!cCal} style={{flex:1,padding:'8px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:600,fontSize:12,opacity:(!cName.trim()||!cCal)?0.5:1}}>Save</button>
+              <button onClick={()=>{setShowCustom(false);setAddedItems([])}} style={{flex:1,padding:'8px',borderRadius:8,border:`1px solid ${C.border}`,fontSize:12,color:C.sub}}>Cancel</button>
+              <button onClick={handleCustomSave} disabled={addedItems.length===0} style={{flex:1,padding:'10px',borderRadius:8,background:C.primary,color:'#fff',fontWeight:700,fontSize:13,opacity:addedItems.length===0?0.5:1}}>Save ({addedItems.length} item{addedItems.length!==1?'s':''})</button>
             </div>
           </div>
         )}
